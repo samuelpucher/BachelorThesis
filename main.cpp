@@ -2,14 +2,14 @@
     Author: Samuel Pucher
     Description: Time evolution algorithm
 
-    GNUplot cmd: splot [*:*] [*:*] [*:*] "res.txt" w l
-
     Algo: 
     1. start with initial wavefunction psi(t)
     2. evaluate wavefunction at time psi(t+delta_t) = e^(-delta_t * H)psi(t)
     3. normalize psi
     4. go to 1
 */
+
+//TODO: Normierung für Polarkoordinaten
 
 
 //Includes
@@ -22,15 +22,19 @@ using namespace std;
 
 
 //GLobal constants
-int GRID = 1000;
-double TMAX = 8;
-int STEPS = 240000;
+int GRID = 200;
+double TMAX = 5;
+int STEPS = 150000;
 double T_STEP = TMAX/STEPS;
 double HBAR = 1;
 double OMEGA = 1;
 double MASS = 1;
-double LOWER = -5;
-double UPPER = 5;
+double LOWER = 0;
+double UPPER = 20;
+
+//Physical constants
+double LAMBDA_IB = 1;
+double LAMBDA_BB = 1;
 
 //helper functions
 double get_x(int i) {
@@ -135,100 +139,102 @@ void update_der(double* arr1, double* arr2, double* arr3){
 
 }
 
-double start_func(double x) {
-    return (exp(-(x-1)*(x-1)));
+double start_func_chi(double x) {
+    return (exp(-(x)*(x)));
 }
 
-double potential(double x){
-    return (x*x*1/2);
+double start_func_phi(double x) {
+    return (1/sqrt(100000));
 }
 
-double analytic_sol(double x) {
-    return (0.7511255*exp(-x*x/2));
-}
 
 //main function
 int main(){
 
     //Program vars
-    double* function = new double[GRID];
-    double* arr_fder = new double[GRID];
-    double* arr_sder = new double[GRID];
+    double* function_chi = new double[GRID];
+    double* arr_fder_chi = new double[GRID];
+    double* arr_sder_chi = new double[GRID];
+    double* function_phi = new double[GRID];
+    double* arr_fder_phi = new double[GRID];
+    double* arr_sder_phi = new double[GRID];
+
     double t0 = 0;
     double time = t0;
     double delta_t = TMAX/STEPS;
     bool printed = false;
 
     //File mangament
-    ofstream myfile;
-    ofstream omegafile;
-    myfile.open ("./results/function.txt");
-    omegafile.open ("./results/omega.txt");
+    ofstream file_chi;
+    ofstream file_phi;
+    file_chi.open ("./results/function_chi.txt");
+    file_phi.open ("./results/function_phi.txt");
 
-    //init Function
-    init(start_func, function, arr_fder, arr_sder);  
-    norm(function);
+    //init Functions
+    init(start_func_chi, function_chi, arr_fder_chi, arr_sder_chi);  
+    norm(function_chi);
+    init(start_func_phi, function_phi, arr_fder_phi, arr_sder_phi);  
+    norm(function_phi);
 
     //Main Loop
     for (int i = 0; i < STEPS; i++)
     {
-        //Step 1: multiply
+        //Step 1: propagate chi
         for (int j = 0; j < GRID; j++)
         {
-            function[j] = exp(-delta_t/2*potential(get_x(j)))*function[j];
+            function_chi[j] = exp(-delta_t/2*function_phi[j]*function_phi[j]*LAMBDA_IB)*function_chi[j];
         }
-
-        //Step 2: Kinetic energy operator
         for (int j = 0; j < GRID; j++)
         {
-            function[j] = function[j] + HBAR*HBAR*delta_t/(2*MASS)*arr_sder[j];
+            function_chi[j] = function_chi[j] + HBAR*HBAR*delta_t/(2*MASS)*arr_sder_chi[j];
         }
-        
-        //Step 3: multiply
         for (int j = 0; j < GRID; j++)
         {
-            function[j] = exp(-delta_t/2*potential(get_x(j)))*function[j];
+            function_chi[j] = exp(-delta_t/2*function_phi[j]*function_phi[j]*LAMBDA_IB)*function_chi[j];
         }
 
-        //Step 4: Norm and Plot omega_0
-        double test_sum = norm(function);
-        double omega_0 = (-1)*log(test_sum*test_sum)/(2*T_STEP);
-        double soll = 0.5;
-        double eps = omega_0-soll;
-        if(i%100 == 0 ){
-            double t = TMAX*i/STEPS;    
-            omegafile << time << " "<< omega_0 << "\n";;    
+        //Step 2: propagate phi
+        for (int j = 0; j < GRID; j++)
+        {
+            function_phi[j] = exp(-delta_t/2*(function_phi[j]*function_phi[j]*LAMBDA_BB+ LAMBDA_IB*function_chi[j]*function_chi[j]))*function_phi[j];
+        }
+        for (int j = 0; j < GRID; j++)
+        {
+            function_phi[j] = function_phi[j] + HBAR*HBAR*delta_t/(2*MASS)*arr_sder_phi[j];
+        }
+        for (int j = 0; j < GRID; j++)
+        {
+            function_phi[j] = exp(-delta_t/2*(function_phi[j]*function_phi[j]*LAMBDA_BB+ LAMBDA_IB*function_chi[j]*function_chi[j]))*function_phi[j];
         }
 
-        if(i == STEPS-1) {/*  
-            double Eres = 0;
-            for (int i = 0; i < GRID; i++)
-            {
-                double delta_pos = (UPPER-LOWER)/double(GRID);
-                Eres +=  (-function[i]*HBAR*HBAR/(2*MASS)*sder(i, GRID, function)+function[i]/2*get_x(i)*get_x(i)*function[i])*delta_pos;
-            }*/
-        }
+        //Step 3: Norm 
+        norm(function_chi);
+        norm(function_phi);
 
-        //Step 5: increase time
+        //Step 4: increase time
         time+=delta_t;
 
         //Step 5 update second derivative
-        update_der(function, arr_fder, arr_sder);
-
-        //Write function to Textfile
-        if(i%10000==0){
-            //Write to file
-            for (int j = 0; j < GRID; j++)
-            {
-                myfile << get_x(j) << " " << time << " " << function[j] << "\n";
-            }            
-            myfile << "\n";
-            myfile << "\n";
-        }
+        update_der(function_chi, arr_fder_chi, arr_sder_chi);
+        update_der(function_phi, arr_fder_phi, arr_sder_phi);
     }
 
+    //Write to file
+    for (int i = 0; i < GRID; i++)
+    {
+        if(i%1==0){
+            file_chi << get_x(i) << " " << function_chi[i] << "\n";    
+            file_chi << "\n";
+        }
+        if(i%1==0){
+            file_phi << get_x(i) << " " << function_phi[i] << "\n";           
+            file_phi << "\n";
+        }
+    }
+    
+
     //Close file
-    myfile.close();
-    omegafile.close();
+    file_chi.close();
+    file_phi.close();
     
 }
