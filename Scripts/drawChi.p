@@ -1,3 +1,3 @@
 set title 'Chi'
-plot [*:*] [*:*] "../results/function_chi.txt" w l
+plot [*:*] [*:*] "../results/function_chi.txt" l
 
