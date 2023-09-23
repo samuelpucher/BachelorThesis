@@ -1,0 +1,2 @@
+f(x) = exp(-x**2/(2*s**2))*((3.1415*s**2)**(-1./2.))
+fit f(x) 'function_chi_final.txt' via s

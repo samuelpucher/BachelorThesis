@@ -1,0 +1,9 @@
+#System params
+#    UPPER = 100;
+#    LOWER = 0;  //Total length = 100
+#    T_STEP = 1e-5;
+#    GRID = 500;
+#    TMAX = 100;
+#    //physical params
+#    ALPHA = 1;
+#    GAMMA = 0.5;  
