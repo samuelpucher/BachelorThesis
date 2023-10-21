@@ -1,15 +1,6 @@
 /*
     Author: Samuel Pucher
-    Description: Time evolution algorithm
-
-    Algo: 
-    1. start with initial wavefunction psi(t)
-    2. evaluate wavefunction at time psi(t+delta_t) = e^(-delta_t * H)psi(t)
-    3. normalize psi
-    4. go to 1
 */
-
-//TODO: Normierung für Phi: Rand ->1
 
 //Includes
 #include <iostream>
@@ -24,7 +15,7 @@ using namespace std;
 //GLobal constants
 const int GRID_R = 100;
 const int GRID_P = 100;
-double TMAX = 20;
+double TMAX = 10;
 double T_STEP = 1e-6;
 int STEPS = TMAX/T_STEP;            //T_STEP should be arround 0.000001 = 1e-6        
 double LOWER = 0;
@@ -61,7 +52,6 @@ double fder_f_r0(int i, int j, int k, double arr[GRID_R][GRID_R][GRID_P]) {
     else {
         return ((arr[i+1][j][k]-arr[i-1][j][k])/(2*eps));
     }
-
 }
 
 double fder_f_rj(int i, int j, int k, double arr[GRID_R][GRID_R][GRID_P]) {
@@ -78,8 +68,7 @@ double fder_f_rj(int i, int j, int k, double arr[GRID_R][GRID_R][GRID_P]) {
     }
     else {
         return ((arr[i][j+1][k]-arr[i][j-1][k])/(2*eps));
-    }
- 
+    } 
 }
 
 double fder_f_deltaphi(int i, int j, int k, double arr[GRID_R][GRID_R][GRID_P]) {
@@ -94,7 +83,6 @@ double fder_f_deltaphi(int i, int j, int k, double arr[GRID_R][GRID_R][GRID_P]) 
     else {
         return ((arr[i][j][k+1]-arr[i][j][k]-1)/(2*eps));
     }
-
 }
 
 double sder_f_r0(int i, int j, int k, double arr[GRID_R][GRID_R][GRID_P]) {
@@ -217,12 +205,9 @@ void init_U(double (*func)(double), double a_potential_U[GRID_R][GRID_R][GRID_P]
                 deltaphi = get_phi(k);
                 dist = sqrt(r0*r0+rj*rj-2*r0*rj*cos(deltaphi));
                 a_potential_U[i][j][k] = func(dist);
-            }
-            
-        }
-        
-    }
-    
+            }            
+        }        
+    }    
 }
 
 void update_der_f(double a_func[GRID_R][GRID_R][GRID_P], double a_fder_r0[GRID_R][GRID_R][GRID_P], double a_fder_rj[GRID_R][GRID_R][GRID_P], double a_fder_deltaphi[GRID_R][GRID_R][GRID_P], double a_sder_r0[GRID_R][GRID_R][GRID_P], double a_sder_rj[GRID_R][GRID_R][GRID_P], double a_sder_deltaphi[GRID_R][GRID_R][GRID_P]){
@@ -269,8 +254,7 @@ double norm_f(double a_func[GRID_R][GRID_R][GRID_P]){
             for (int k = 0; i < GRID_P; k++)
             {
                 a_func[i][j][k] = a_func[i][j][k]/f_tilde; 
-            }
-            
+            }            
         }
     }
    return sqrt(sum);
@@ -325,9 +309,15 @@ double calc_Vg(double a_func_f[GRID_R][GRID_R][GRID_P], double a_potential_U[GRI
     return sum;
 }
 
-//main function
-int main(){
+double approx_a(double f_2eps, double f_3eps){
+    double eps = (UPPER-LOWER)/double(GRID_R);
+    double b = (f_3eps-f_2eps)/(5*eps*eps);
+    return (f_2eps-4*b*eps*eps);
+}
 
+int main(){
+    cout << "Hallo" << endl;
+    {
     /*int argc, char* argv[]
     std::cout << "Beta: " << argv[1] << std::endl;    
     double BETA = (int)argv[1];
@@ -335,7 +325,7 @@ int main(){
     std::string path = "./results/final_chi/function_chi_final_" + help_path +".txt";
     std::cout << "Path: " << path << std::endl; 
     */
-   
+    }
 
     //g-Funtion: initialization g[r0]
     double arr_function_g[GRID_R];
@@ -363,28 +353,21 @@ int main(){
     double arr_sder_ftilde_rj[GRID_R][GRID_R][GRID_P];
     double arr_sder_ftilde_deltaphi[GRID_R][GRID_R][GRID_P];
 
-    //misc. variables
+    //physical potentials
     double arr_potential_U[GRID_R][GRID_R][GRID_P];
     double arr_Vg[GRID_R];
     double arr_Vf[GRID_R][GRID_R][GRID_P];
 
     //Physical variables
     double time = 0;
-    double eps_r = (UPPER-LOWER)/double(GRID_R);
-    double eps_p = (UPPER-LOWER)/double(GRID_P);
 
     //File mangament
-    /*
-    ofstream file_omega;
+    ofstream file_ft;
     ofstream file_g;
     ofstream file_f;
-    ofstream file_g_final;
-    ofstream file_f_final;
-    file_omega.open ("./results/omega.txt");
-    file_g.open ("./results/function_g.txt");
-    file_f.open ("./results/function_f.txt");
-    file_g_final.open ("./results/final_chi/function_g_final.txt");
-    file_f_final.open ("./results/function_f_final.txt");*/
+    file_ft.open ("./results/Impurity-BEC/21.10/");
+    file_g.open ("./results/Impurity-BEC/21.10/");
+    file_f.open ("./results/Impurity-BEC/21.10/");
 
     //init Functions
     init_g(start_func_g, arr_function_g, arr_fder_g_r0, arr_sder_g_r0); 
@@ -394,7 +377,6 @@ int main(){
     init_f(start_func_f, arr_function_ftilde, arr_fder_ftilde_r0, arr_fder_ftilde_rj, arr_fder_ftilde_deltaphi, arr_sder_ftilde_r0, arr_sder_ftilde_rj, arr_sder_ftilde_deltaphi);
     norm_f(arr_function_ftilde);
     init_U(potential_U, arr_potential_U);
-    
 
     //Main Loop
     for (int t = 0; t < STEPS; t++)
@@ -415,45 +397,44 @@ int main(){
         }       
 
         //Step 3
-        for (int i = 0; i < GRID_R; i++)
+        for (int i = 2; i < GRID_R; i++)
         {
             arr_function_g[i] = exp(-arr_Vg[i]/(2*T_STEP))*arr_function_g[i]*arr_function_g[i];
         }
 
         //Step 4
-        for (int i = 0; i < GRID_R; i++)
+        for (int i = 2; i < GRID_R; i++)
         {
             arr_function_g[i] = arr_function_g[i] + ALPHA/2 * T_STEP*arr_sder_g_r0[i];
         }
-        
-
 
         //Step 5
-        for (int i = 0; i < GRID_R; i++)
+        for (int i = 2; i < GRID_R; i++)
         {
             arr_function_g[i] = exp(-arr_Vg[i]/(2*T_STEP))*arr_function_g[i]*arr_function_g[i];
         }
+        arr_function_g[0] = approx_a(arr_function_g[2], arr_function_g[3]);
+        arr_function_g[1] = 0.5*(arr_function_g[0]+arr_function_g[2]);
 
         //Step 6
         norm_g(arr_function_g, true);
 
         //Step 7
-        for (int i = 0; i < GRID_R; i++)
+        for (int i = 2; i < GRID_R; i++)
         {
-            for (int j = 0; j < GRID_R; j++)
+            for (int j = 2; j < GRID_R; j++)
             {
                 for (int  k = 0; i < GRID_P; k++)
                 {
                     arr_function_ftilde[i][j][k] = exp(-arr_Vf[i][j][k]/(2*T_STEP))*arr_function_ftilde[i][j][k];
                 }
-            }
-            
+            }            
         }
 
         //Step 8
-        for (int i = 0; i < GRID_R; i++)
+        for (int i = 2; i < GRID_R; i++)
         {
-            for (int j = 0; j < GRID_R; i++)
+            for (int j = 2; j < GRID_R; i++)
             {
                 for (int k= 0; k < GRID_P; k++)
                 {
@@ -461,18 +442,35 @@ int main(){
                 }
             }
         }
-        
 
         //Step 9
-        for (int i = 0; i < GRID_R; i++)
+        for (int i = 2; i < GRID_R; i++)
         {
-            for (int j = 0; j < GRID_R; j++)
+            for (int j = 2; j < GRID_R; j++)
             {
                 for (int  k = 0; i < GRID_P; k++)
                 {
                     arr_function_ftilde[i][j][k] = exp(-arr_Vf[i][j][k]/(2*T_STEP))*arr_function_ftilde[i][j][k];
                 }
             }   
+        }
+
+        for (int k = 0; k < GRID_P; k++)
+        {       
+            for (int i = 2; i < GRID_R; i++)
+            {
+                arr_function_ftilde[i][0][k] = approx_a(arr_function_ftilde[i][2][k], arr_function_ftilde[i][3][k]);
+                arr_function_ftilde[i][1][k] = 0.5*(arr_function_ftilde[i][2][k] + arr_function_ftilde[i][0][k]);
+            }            
+            for (int j = 2; j < GRID_R; j++)
+            {
+                arr_function_ftilde[0][j][k] = approx_a(arr_function_ftilde[2][j][k], arr_function_ftilde[3][j][k]);
+                arr_function_ftilde[1][j][k] = 0.5*(arr_function_ftilde[0][j][k] + arr_function_ftilde[2][j][k]);                
+            }
+            arr_function_ftilde[0][0][k] = arr_function_ftilde[1][1][k] = 0.5*(arr_function_ftilde[2][1][k]+ arr_function_ftilde[1][2][k]);
+            arr_function_ftilde[1][0][k] = 0.5*(arr_function_ftilde[0][0][k] + arr_function_ftilde[2][0][k]); 
+            arr_function_ftilde[0][1][k] = 0.5*(arr_function_ftilde[0][0][k] + arr_function_ftilde[0][2][k]); 
+    
         }
         
         //Step 10
@@ -493,25 +491,22 @@ int main(){
         update_der_f(arr_function_ftilde, arr_fder_ftilde_r0, arr_fder_ftilde_rj, arr_fder_ftilde_deltaphi, arr_sder_ftilde_r0, arr_sder_ftilde_rj, arr_sder_ftilde_deltaphi);
         update_der_g(arr_function_g, arr_fder_g_r0, arr_sder_g_r0);
         
+        //Write to file
+        if(t%100000 == 0) {
+            for (int i = 0; i < GRID_R; i++)
+            {
+                file_g << get_r(i) << " " << time << " " << arr_function_g[i] << "\n";           
+            }            
+            file_g << "\n";
+        }
 
+        //increae time
         time+=T_STEP;
     }
 
-    
-    //Write to file
-    /*
-    for (int i = 0; i < GRID; i++)
-    {
-            file_chi_final << get_r(i) << " " << function_chi[i] << "\n";    
-            file_phi_final << get_r(i) << " "  << function_phi[i] << "\n";           
-    }   
-
-    //Close file
-    file_omega.close();
-    file_chi.close();
-    file_phi.close();
-    file_chi_final.close();
-    file_phi_final.close();
-    */
-    
+    //Close files
+    file_f.close();
+    file_g.close();
+    file_g.close();
+   
 }

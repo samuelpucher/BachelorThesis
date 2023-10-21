@@ -147,6 +147,11 @@ double analytic_sol(double x) {
     return (0.7511255*exp(-x*x/2));
 }
 
+double approx_a(double f_2eps, double f_3eps, double eps){
+    double b = (f_3eps-f_2eps)/(5*eps*eps);
+    return (f_2eps-4*b*eps*eps);
+}
+
 //main function
 int main(){
 
