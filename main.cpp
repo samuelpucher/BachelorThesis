@@ -13,13 +13,14 @@
 using namespace std;
 
 //GLobal constants
-const int GRID_R = 20;
-const int GRID_P = 20;
-double TMAX = 1;
+const int GRID_R = 100;
+const int GRID_P = 100;
+double TMAX = 10;
 double T_STEP = 1e-6;
 int STEPS = TMAX/T_STEP;            //T_STEP should be arround 0.000001 = 1e-6        
 double LOWER = 0;
-double UPPER = 5;
+double UPPER = 15;
+double THRESHOLD = 0.01;
 
 //Physical constants
 double GAMMA = 1;
@@ -33,7 +34,7 @@ double get_r(int i) {
 }
 
 double get_phi(int i) {
-    double res = 2*M_PI/(double(i)/double(GRID_P));
+    double res = 2*M_PI*(double(i)/double(GRID_P));
     return res;
 }
 
@@ -208,7 +209,6 @@ void init_U(double (*func)(double), double a_potential_U[GRID_R][GRID_R][GRID_P]
             rj= get_r(j);
             for (int k = 0; k < GRID_P; k++)
             {
-                deltaphi = get_phi(k);
                 dist = sqrt(r0*r0+rj*rj-2*r0*rj*cos(deltaphi));
                 a_potential_U[i][j][k] = func(dist);
             }            
@@ -275,9 +275,10 @@ double norm_g(double a_func[GRID_R], bool norm_arr){
 
     for (int i = 0; i < GRID_R; i++)
     {
+        cout << a_func[i] << endl;
         sum+= a_func[i]*a_func[i]*get_r(i);
     }
-    sum*= 2*eps_r0*M_PI;
+    sum = sum* 2*eps_r0*M_PI;
 
     if(norm_arr){
         for (int i = 0; i < GRID_R; i++)
@@ -289,11 +290,11 @@ double norm_g(double a_func[GRID_R], bool norm_arr){
 }
 
 double start_func_g(double r0) {
-    return (exp(-(r0)*(r0)/0.5));
+    return (exp(-(r0)*(r0)));
 }
 
 double start_func_f(double r0, double rj, double deltaphi) {
-    return (exp(-(r0)*(r0)/0.5));
+    return (exp(-(r0)*(r0)));
 }
 
 double potential_U(double dist){
@@ -305,16 +306,15 @@ double calc_Vg(double a_func_f[GRID_R][GRID_R][GRID_P], double a_potential_U[GRI
     double r0 = get_r(i);
     double eps_rj = (UPPER-LOWER)/double(GRID_R);
     double eps_p = (UPPER-LOWER)/double(GRID_P);
-    for (int j = 0; j < GRID_R; j++)
+    for (int j = 2; j < GRID_R; j++)
     {
         double rj = get_r(j);
         for (int k = 0; k < GRID_P; k++)        // i corresponds to rj and j to deltaphi 
-        {
-            sum+= ALPHA/2*fder_f_r0(i,j,k, a_func_f)*fder_f_r0(i,j,k, a_func_f)+ 0.5*fder_f_rj(i,j,k, a_func_f)*fder_f_rj(i,j,k, a_func_f)+fder_f_deltaphi(i,j,k, a_func_f)*fder_f_deltaphi(i,j,k, a_func_f)*(ALPHA/(2*r0*r0)+ 1/(2*rj*rj))+a_func_f[i][j][k]*a_func_f[i][j][k]*a_potential_U[i][j][k]+0.5*(a_func_f[i][j][k]*a_func_f[i][j][k]*a_func_f[i][j][k]*a_func_f[i][j][k]-2*a_func_f[i][j][k]*a_func_f[i][j][k]+1);   
+        {            
+            sum = ALPHA/2*fder_f_r0(i,j,k, a_func_f)*fder_f_r0(i,j,k, a_func_f)+ 0.5*fder_f_rj(i,j,k, a_func_f)*fder_f_rj(i,j,k, a_func_f)+fder_f_deltaphi(i,j,k, a_func_f)*fder_f_deltaphi(i,j,k, a_func_f)*(ALPHA/(2*r0*r0)+ 1/(2*rj*rj))+a_func_f[i][j][k]*a_func_f[i][j][k]*a_potential_U[i][j][k]+0.5*(a_func_f[i][j][k]*a_func_f[i][j][k]*a_func_f[i][j][k]*a_func_f[i][j][k]-2*a_func_f[i][j][k]*a_func_f[i][j][k]+1);      
         }
     }
-    sum*=eps_rj*eps_p/GAMMA;
-    
+    sum *= eps_rj*eps_p/GAMMA;
     return sum;
 }
 
@@ -328,6 +328,7 @@ double approx_a(double f_2eps, double f_3eps){
 
 int main(){
     
+    //NORM_G DOES NOT WORK!!!!!
     
     /*
     {
@@ -339,7 +340,6 @@ int main(){
     std::cout << "Path: " << path << std::endl;   
     }
     */
-   
    
        
     //g-Funtion: initialization g[r0]
@@ -357,8 +357,6 @@ int main(){
     static double arr_sder_f_r0[GRID_R][GRID_R][GRID_P];
     static double arr_sder_f_rj[GRID_R][GRID_R][GRID_P];
     static double arr_sder_f_deltaphi[GRID_R][GRID_R][GRID_P];
-
-    
 
     //ftilde-Function: initialization f[r0][rj][deltaphi]
     static double arr_function_ftilde[GRID_R][GRID_R][GRID_P];
@@ -378,17 +376,13 @@ int main(){
     //Physical variables
     double time = 0;
 
-    
-
     //File mangament
     ofstream file_ft;
     ofstream file_g;
     ofstream file_f;
-    file_ft.open ("./results/Impurity-BEC/21.10/function_ft.txt");
-    file_g.open ("./results/Impurity-BEC/21.10/function_g.txt");
-    file_f.open ("./results/Impurity-BEC/21.10/function_f.txt");
-
-    
+    file_ft.open ("./results/Impurity-BEC/21.10/");
+    file_g.open ("./results/Impurity-BEC/21.10/");
+    file_f.open ("./results/Impurity-BEC/21.10/");
 
     //init Functions
     init_g(start_func_g, arr_function_g, arr_fder_g_r0, arr_sder_g_r0); 
@@ -396,25 +390,19 @@ int main(){
     init_f(start_func_f, arr_function_f, arr_fder_f_r0, arr_fder_f_rj, arr_fder_f_deltaphi, arr_sder_f_r0, arr_sder_f_rj, arr_sder_f_deltaphi);
     norm_f(arr_function_f);
     init_f(start_func_f, arr_function_ftilde, arr_fder_ftilde_r0, arr_fder_ftilde_rj, arr_fder_ftilde_deltaphi, arr_sder_ftilde_r0, arr_sder_ftilde_rj, arr_sder_ftilde_deltaphi);
-    
     norm_f(arr_function_ftilde);
-    
     init_U(potential_U, arr_potential_U);
-
-
-    
     
           
 
     //Main Loop
     for (int t = 0; t < STEPS; t++)
     {
-        //Step 1 and Step 2
-        for (int i = 0; i < GRID_R; i++)
+        //Step 1 and Step 2                                 TODO: APPROX FUNCTION FOR LOW INDICES!!!!!!!!
+        for (int i = 2; i < GRID_R; i++) 
         {
-            arr_Vg[i] = calc_Vg(arr_function_f, arr_potential_U, i);
-            
-            for (int j = 0; j < GRID_R; j++)
+            arr_Vg[i] = calc_Vg(arr_function_f, arr_potential_U, i);        
+            for (int j = 2; j < GRID_R; j++)
             {
                 for (int  k = 0; k < GRID_P; k++)
                 {
@@ -422,38 +410,34 @@ int main(){
                     arr_function_ftilde[i][j][k] = arr_function_f[i][j][k]* arr_function_g[i];
                 }                    
             }
-        }     
-
+        }
         
-        
-
         //Step 3
         for (int i = 2; i < GRID_R; i++)
         {
-            arr_function_g[i] = exp(-arr_Vg[i]/(2*T_STEP))*arr_function_g[i]*arr_function_g[i];
-        }
+            arr_function_g[i] = exp(-T_STEP*arr_Vg[i]/2)*arr_function_g[i];
+        }      
         
-
+        
         //Step 4
         for (int i = 2; i < GRID_R; i++)
         {
             arr_function_g[i] = arr_function_g[i] + ALPHA/2 * T_STEP*arr_sder_g_r0[i];
         }
         
-
         //Step 5
         for (int i = 2; i < GRID_R; i++)
         {
-            arr_function_g[i] = exp(-arr_Vg[i]/(2*T_STEP))*arr_function_g[i]*arr_function_g[i];
+            arr_function_g[i] = exp(-T_STEP*arr_Vg[i]/2)*arr_function_g[i];
         }
+
         arr_function_g[0] = approx_a(arr_function_g[2], arr_function_g[3]);
         arr_function_g[1] = 0.5*(arr_function_g[0]+arr_function_g[2]);
         
-
         //Step 6
-        norm_g(arr_function_g, true);
+        norm_g(arr_function_g, true);   
 
-        
+        cout << arr_function_g[2] << endl; 
 
         //Step 7
         for (int i = 2; i < GRID_R; i++)
@@ -462,11 +446,10 @@ int main(){
             {
                 for (int  k = 0; k < GRID_P; k++)
                 {
-                    arr_function_ftilde[i][j][k] = exp(-arr_Vf[i][j][k]/(2*T_STEP))*arr_function_ftilde[i][j][k];
+                    arr_function_ftilde[i][j][k] = exp(-arr_Vf[i][j][k]*T_STEP/2)*arr_function_ftilde[i][j][k];
                 }
             }            
-        }
-
+        }       
         
 
         //Step 8
@@ -479,10 +462,7 @@ int main(){
                     arr_function_ftilde[i][j][k] = arr_function_ftilde[i][j][k] + ALPHA/2 * arr_sder_ftilde_r0[i][j][k] + 0.5 * arr_sder_ftilde_rj[i][j][k];
                 }
             }
-        }
-        
-
-        
+        }                
 
         //Step 9
         for (int i = 2; i < GRID_R; i++)
@@ -491,7 +471,7 @@ int main(){
             {
                 for (int  k = 0; k < GRID_P; k++)
                 {
-                    arr_function_ftilde[i][j][k] = exp(-arr_Vf[i][j][k]/(2*T_STEP))*arr_function_ftilde[i][j][k];
+                    arr_function_ftilde[i][j][k] = exp(-arr_Vf[i][j][k]*T_STEP/2)*arr_function_ftilde[i][j][k];
                 }
             }   
         }
@@ -511,11 +491,10 @@ int main(){
             arr_function_ftilde[0][0][k] = arr_function_ftilde[1][1][k] = 0.5*(arr_function_ftilde[2][1][k]+ arr_function_ftilde[1][2][k]);
             arr_function_ftilde[1][0][k] = 0.5*(arr_function_ftilde[0][0][k] + arr_function_ftilde[2][0][k]); 
             arr_function_ftilde[0][1][k] = 0.5*(arr_function_ftilde[0][0][k] + arr_function_ftilde[0][2][k]); 
-    
         }
 
         
-        
+
         //Step 10
         for (int i = 0; i < GRID_R; i++)
         {
@@ -530,7 +509,6 @@ int main(){
 
         
 
-        
 
         //Step 11
         norm_f(arr_function_f);
@@ -538,13 +516,10 @@ int main(){
         update_der_f(arr_function_ftilde, arr_fder_ftilde_r0, arr_fder_ftilde_rj, arr_fder_ftilde_deltaphi, arr_sder_ftilde_r0, arr_sder_ftilde_rj, arr_sder_ftilde_deltaphi);
         update_der_g(arr_function_g, arr_fder_g_r0, arr_sder_g_r0);
 
-        
-         
-        
         //Write to file
-        if(t%10000 == 0) {
+        if(t%100000 == 0) {
             for (int i = 0; i < GRID_R; i++)
-            {                
+            {
                 file_g << get_r(i) << " " << time << " " << arr_function_g[i] << "\n";           
             }            
             file_g << "\n";
@@ -552,12 +527,13 @@ int main(){
 
         //increae time
         time+=T_STEP;
+
+        //cout << time << endl;
     }
 
     //Close files
     file_f.close();
     file_g.close();
     file_g.close();
-   
    
 }
