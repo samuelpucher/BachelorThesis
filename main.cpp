@@ -15,12 +15,12 @@ using namespace std;
 //GLobal constants
 const int GRID_R = 100;
 const int GRID_P = 100;
-double TMAX = 10;
+double TMAX = 1;
 double T_STEP = 1e-6;
 int STEPS = TMAX/T_STEP;            //T_STEP should be arround 0.000001 = 1e-6        
 double LOWER = 0;
-double UPPER = 15;
-double THRESHOLD = 0.01;
+double UPPER = 10;
+double THRESHOLD = 0.01;            //not used yet, reserved for later
 
 //Physical constants
 double GAMMA = 1;
@@ -275,7 +275,6 @@ double norm_g(double a_func[GRID_R], bool norm_arr){
 
     for (int i = 0; i < GRID_R; i++)
     {
-        cout << a_func[i] << endl;
         sum+= a_func[i]*a_func[i]*get_r(i);
     }
     sum = sum* 2*eps_r0*M_PI;
@@ -290,11 +289,11 @@ double norm_g(double a_func[GRID_R], bool norm_arr){
 }
 
 double start_func_g(double r0) {
-    return (exp(-(r0)*(r0)));
+    return (exp(-(r0)*(r0))+0.2);
 }
 
 double start_func_f(double r0, double rj, double deltaphi) {
-    return (exp(-(r0)*(r0)));
+    return 1.0;
 }
 
 double potential_U(double dist){
@@ -381,7 +380,7 @@ int main(){
     ofstream file_g;
     ofstream file_f;
     file_ft.open ("./results/Impurity-BEC/21.10/");
-    file_g.open ("./results/Impurity-BEC/21.10/");
+    file_g.open ("./results/Impurity-BEC/21.10/function_g.txt");
     file_f.open ("./results/Impurity-BEC/21.10/");
 
     //init Functions
@@ -437,7 +436,7 @@ int main(){
         //Step 6
         norm_g(arr_function_g, true);   
 
-        cout << arr_function_g[2] << endl; 
+        //cout << arr_function_g[2] << endl; 
 
         //Step 7
         for (int i = 2; i < GRID_R; i++)
@@ -507,9 +506,6 @@ int main(){
             }   
         }
 
-        
-
-
         //Step 11
         norm_f(arr_function_f);
         update_der_f(arr_function_f, arr_fder_f_r0, arr_fder_f_rj, arr_fder_f_deltaphi, arr_sder_f_r0, arr_sder_f_rj, arr_sder_f_deltaphi);
@@ -517,7 +513,7 @@ int main(){
         update_der_g(arr_function_g, arr_fder_g_r0, arr_sder_g_r0);
 
         //Write to file
-        if(t%100000 == 0) {
+        if(t%10000 == 0) {
             for (int i = 0; i < GRID_R; i++)
             {
                 file_g << get_r(i) << " " << time << " " << arr_function_g[i] << "\n";           
@@ -528,7 +524,7 @@ int main(){
         //increae time
         time+=T_STEP;
 
-        //cout << time << endl;
+        cout << time << endl;
     }
 
     //Close files
