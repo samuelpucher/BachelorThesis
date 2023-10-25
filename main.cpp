@@ -13,8 +13,8 @@
 using namespace std;
 
 //GLobal constants
-const int GRID_R = 100;
-const int GRID_P = 100;
+const int GRID_R = 50;
+const int GRID_P = 50;
 double TMAX = 1;
 double T_STEP = 1e-6;
 int STEPS = TMAX/T_STEP;            //T_STEP should be arround 0.000001 = 1e-6        
@@ -434,9 +434,7 @@ int main(){
         arr_function_g[1] = 0.5*(arr_function_g[0]+arr_function_g[2]);
         
         //Step 6
-        norm_g(arr_function_g, true);   
-
-        //cout << arr_function_g[2] << endl; 
+        norm_g(arr_function_g, true);    
 
         //Step 7
         for (int i = 2; i < GRID_R; i++)
