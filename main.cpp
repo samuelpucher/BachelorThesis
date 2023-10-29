@@ -13,19 +13,18 @@
 using namespace std;
 
 //GLobal constants
-const int GRID_R = 50;
-const int GRID_P = 50;
-double TMAX = 1;
+const int GRID_R = 100;
+const int GRID_P = 100;
+double TMAX = 0.1;
 double T_STEP = 1e-6;
 int STEPS = TMAX/T_STEP;            //T_STEP should be arround 0.000001 = 1e-6        
 double LOWER = 0;
-double UPPER = 10;
+double UPPER = 30;
 double THRESHOLD = 0.01;            //not used yet, reserved for later
 
 //Physical constants
 double GAMMA = 1;
 double ALPHA = 1;
-
 
 //helper functions
 double get_r(int i) {
@@ -289,7 +288,7 @@ double norm_g(double a_func[GRID_R], bool norm_arr){
 }
 
 double start_func_g(double r0) {
-    return (exp(-(r0)*(r0))+0.2);
+    return (exp(-(r0)*(r0)/3.0)+0.2);
 }
 
 double start_func_f(double r0, double rj, double deltaphi) {
@@ -326,9 +325,7 @@ double approx_a(double f_2eps, double f_3eps){
 
 
 int main(){
-    
-    //NORM_G DOES NOT WORK!!!!!
-    
+        
     /*
     {
     int argc, char* argv[]
@@ -380,7 +377,7 @@ int main(){
     ofstream file_g;
     ofstream file_f;
     file_ft.open ("./results/Impurity-BEC/21.10/");
-    file_g.open ("./results/Impurity-BEC/21.10/function_g.txt");
+    file_g.open ("./results/Impurity-BEC/26.10/function_g.txt");
     file_f.open ("./results/Impurity-BEC/21.10/");
 
     //init Functions
@@ -397,6 +394,10 @@ int main(){
     //Main Loop
     for (int t = 0; t < STEPS; t++)
     {
+        cout << arr_function_g[5] << endl;
+        //cout << arr_function_f[5][5][5] << endl;
+
+
         //Step 1 and Step 2                                 TODO: APPROX FUNCTION FOR LOW INDICES!!!!!!!!
         for (int i = 2; i < GRID_R; i++) 
         {
@@ -490,8 +491,6 @@ int main(){
             arr_function_ftilde[0][1][k] = 0.5*(arr_function_ftilde[0][0][k] + arr_function_ftilde[0][2][k]); 
         }
 
-        
-
         //Step 10
         for (int i = 0; i < GRID_R; i++)
         {
@@ -511,7 +510,7 @@ int main(){
         update_der_g(arr_function_g, arr_fder_g_r0, arr_sder_g_r0);
 
         //Write to file
-        if(t%10000 == 0) {
+        if(t%1 == 0) {
             for (int i = 0; i < GRID_R; i++)
             {
                 file_g << get_r(i) << " " << time << " " << arr_function_g[i] << "\n";           
@@ -522,7 +521,7 @@ int main(){
         //increae time
         time+=T_STEP;
 
-        cout << time << endl;
+        
     }
 
     //Close files
