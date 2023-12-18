@@ -1,0 +1,8 @@
+#PARAMS:
+	-T_STEP=5*1e-6
+	-UPPER=5
+	-GRID_R = 100
+	-GRID_P = 50
+
+Datei wurdei nach t=200 Zeitschritten rausgeschrieben im folgenden format:
+i ; k ; arr_function[i][rj=r_max][k] 
