@@ -1,5 +1,5 @@
 # BachelorThesis
-This repository contains all the raw code, that I used for my Bachelor thesis. A clone of this repository exists on the GitLab server of the institute for theoretical physics at JKU
+This repository contains all the raw code, that I used for my Bachelor thesis in the corresponding 'Bachelorthesis' folder. A clone of this repository exists on the GitLab server of the institute for theoretical physics at JKU
 
 ## Author:
 Samuel Pucher
